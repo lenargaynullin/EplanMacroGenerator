@@ -129,7 +129,7 @@ namespace LenarSoft.EplanActions
                 // Читаем ВСЕ нужные ячейки за один раз
                 string pchv = sheet.Cells[9, 2].Value?.ToString();   // B9  — Тип пуска
                 string nasos = sheet.Cells[13, 2].Value?.ToString();  // B13 — Насос калорифера
-                string uvlazhnitel = sheet.Cells[15, 2].Value?.ToString();  // B15 — Увлажнитель
+                string uvlazhnitel = sheet.Cells[16, 2].Value?.ToString();  // B16 — Увлажнитель
                 string kkb = sheet.Cells[17, 2].Value?.ToString();  // B17 — ККБ
                 string modbus = sheet.Cells[21, 2].Value?.ToString();  // B21 — Modbus
                 string tipPlc = sheet.Cells[23, 2].Value?.ToString();  // B23 — Тип ПЛК
@@ -163,7 +163,7 @@ namespace LenarSoft.EplanActions
                 {
                     macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\02_Прямой_пуск.ema";
 
-                    Dictionary<string, Dictionary<string, string>> dictionary3 = new Dictionary<string, Dictionary<string, string>>
+                    Dictionary<string, Dictionary<string, string>> dictionary4 = new Dictionary<string, Dictionary<string, string>>
                     {
                         ["CONTROL_CABINET"] = new Dictionary<string, string>
                         {
@@ -175,7 +175,7 @@ namespace LenarSoft.EplanActions
                     insertPoint = new PointD(0, 0);
 
                     insert = new MacroGenerator(project);
-                    insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary3, insertPoint);
+                    insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary4, insertPoint);
                 }
 
 
@@ -184,7 +184,7 @@ namespace LenarSoft.EplanActions
                 {
                     macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\03_Насос_калорифера.ema";
 
-                    Dictionary<string, Dictionary<string, string>> dictionary3 = new Dictionary<string, Dictionary<string, string>>
+                    Dictionary<string, Dictionary<string, string>> dictionary5 = new Dictionary<string, Dictionary<string, string>>
                     {
                         ["CONTROL_CABINET"] = new Dictionary<string, string>
                         {
@@ -196,9 +196,56 @@ namespace LenarSoft.EplanActions
                     insertPoint = new PointD(0, 0);
 
                     insert = new MacroGenerator(project);
-                    insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary3, insertPoint);
+                    insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary5, insertPoint);
                 }
 
+                // Макрос 04 — Насос увлажнителя
+                if (uvlazhnitel == "Да")
+                {
+                    macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\04_Насос_увлажнителя.ema";
+
+                    Dictionary<string, Dictionary<string, string>> dictionary6 = new Dictionary<string, Dictionary<string, string>>
+                    {
+                        ["CONTROL_CABINET"] = new Dictionary<string, string>
+                        {
+                            ["FUNCTION"] = "M0-85-050",
+                            ["PLACE"] = "JD01-CM1001"
+                        },
+                    };
+
+                    insertPoint = new PointD(0, 0);
+
+                    insert = new MacroGenerator(project);
+                    insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary6, insertPoint);
+                }
+
+                // Макрос 05 — Лампа сеть
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\05_Лампа_Сеть.ema";
+                Dictionary<string, Dictionary<string, string>> dictionary7 = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary7, insertPoint);
+
+                // Макрос 06 — Питание 24 В
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\06_Питание_24В.ema";
+                Dictionary<string, Dictionary<string, string>> dictionary8 = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
             }
             return true;
         }
