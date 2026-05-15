@@ -526,6 +526,7 @@ namespace LenarSoft.EplanActions
 
                 MessageBox.Show("Схема сгенерирована");
             }
+            // 
             return true;
         }
 
