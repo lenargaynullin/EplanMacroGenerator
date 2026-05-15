@@ -24,7 +24,6 @@ namespace LenarSoft.EplanActions
 
         public bool Execute(ActionCallingContext ctx)
         {
-            // === Условие - Мы находимся на 1-ой странице
             // === 01 Вставить Макрос 01_Ввод_силовой (Работает) 14.05.26
 
             Project project = new ProjectManager().CurrentProject;
@@ -34,7 +33,6 @@ namespace LenarSoft.EplanActions
             Page currentPage = selection.GetSelectedPages().FirstOrDefault();
             if (currentPage == null) { MessageBox.Show("Выделите страницу!"); return false; }
 
-            // Вставить макрос
             string macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\01_Ввод_силовой.ema";
 
             Dictionary<string, Dictionary<string, string>> dictionary = new Dictionary<string, Dictionary<string, string>>
@@ -51,10 +49,9 @@ namespace LenarSoft.EplanActions
             var insert = new MacroGenerator(project);
             insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary, insertPoint);
 
-            MessageBox.Show("Макрос 01_Ввод_силовой вставлен! на 1-ую страницу");
-                        
-
-            // 1. Получаем ВСЕ свойства текущей страницы
+            
+            
+            // Создать страницу
             string plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
             string location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
             string functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
@@ -62,7 +59,6 @@ namespace LenarSoft.EplanActions
             string docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
             int nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
-            // 2. Передаем свойства текущей страницы новой странице
             PagePropertyList nextPageProps = new PagePropertyList();
 
             nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
@@ -72,26 +68,19 @@ namespace LenarSoft.EplanActions
             nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE] = docType;
             nextPageProps[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] = nextNum;
 
-            // 3. Создаём страницу
             Page nextPage = new Page();
             nextPage.Create(project, currentPage.PageType, nextPageProps);
 
-            MessageBox.Show($"Страница создана: {functionalAssigment}/{designationUserDefined}/{docType}/{nextNum}");
-
-            // === Переключить фокус на новую страницу
             Edit editService = new Edit();
             editService.OpenPageWithName(nextPage.Project.ProjectLinkFilePath, nextPage.IdentifyingName);
             CommandLineInterpreter interpreter = new CommandLineInterpreter();
             interpreter.Execute("XGedSelectPageAction");
             interpreter.Execute("XEsSyncPDDsAction");
             interpreter.Execute("XGedEscapeAction");
-
             currentPage = nextPage;
 
-            // === Условие - Мы находимся на 2-ой странице
             // === 02 Вставить Макрос 02_Кросс_модуль (Работает) 14.05.26
 
-            // Вставить макрос
             macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\02_Кросс_модуль.ema";
 
             Dictionary<string, Dictionary<string, string>> dictionary2 = new Dictionary<string, Dictionary<string, string>>
@@ -108,11 +97,6 @@ namespace LenarSoft.EplanActions
             insert = new MacroGenerator(project);
             insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary2, insertPoint);
 
-            MessageBox.Show("Макрос 02_Кросс_модуль вставлен! на 2-ую страницу");
-
-
-            // === 03 Вставка макроса (Тип пуска — ПЧВ/Прямой пуск)
-
             using (var dialog = new OpenFileDialog())
             {
                 dialog.Filter = "Excel (*.xlsx)|*.xlsx";
@@ -121,26 +105,25 @@ namespace LenarSoft.EplanActions
                 if (dialog.ShowDialog() != DialogResult.OK)
                     return true;
 
-                // 2. Прочитать Excel
                 var excel = new Excel.Application();
                 var workbook = excel.Workbooks.Open(dialog.FileName);
                 var sheet = workbook.Sheets[1];
 
-                // Читаем ВСЕ нужные ячейки за один раз
-                string pchv = sheet.Cells[9, 2].Value?.ToString();   // B9  — Тип пуска
-                string nasos = sheet.Cells[13, 2].Value?.ToString();  // B13 — Насос калорифера
-                string uvlazhnitel = sheet.Cells[16, 2].Value?.ToString();  // B16 — Увлажнитель
-                string kkb = sheet.Cells[17, 2].Value?.ToString();  // B17 — ККБ
-                string modbus = sheet.Cells[21, 2].Value?.ToString();  // B21 — Modbus
-                string tipPlc = sheet.Cells[23, 2].Value?.ToString();  // B23 — Тип ПЛК
-                string tipDatchikov = sheet.Cells[11, 2].Value?.ToString();  // B11 — Тип датчиков
-                string moschnostPV = sheet.Cells[7, 2].Value?.ToString();   // B7  — Мощность ПВ
-                string modelPCHV = sheet.Cells[8, 2].Value?.ToString();   // B8  — Модель ПЧВ
+                string pchv = sheet.Cells[9, 2].Value?.ToString();
+                string moschnostPV = sheet.Cells[8, 2].Value?.ToString();
+                string modelPCHV = sheet.Cells[10, 2].Value?.ToString();
+                string nasos = sheet.Cells[13, 2].Value?.ToString();
+                string uvlazhnitel = sheet.Cells[16, 2].Value?.ToString();
+                string kkb = sheet.Cells[19, 2].Value?.ToString();
+                string tipDatchikov = sheet.Cells[21, 2].Value?.ToString();
+                string modbus = sheet.Cells[24, 2].Value?.ToString();
+                string tipPlc = sheet.Cells[26, 2].Value?.ToString();
+                
 
                 workbook.Close(false);
                 excel.Quit();
 
-                // Макрос 02 — ПЧВ или Прямой пуск
+                // === 03 Вставить макрос 02_ПЧВ_Двигатель
                 if (pchv == "ПЧВ")
                 {
                     macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\02_ПЧВ_Двигатель.ema";
@@ -159,7 +142,7 @@ namespace LenarSoft.EplanActions
                     insert = new MacroGenerator(project);
                     insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary3, insertPoint);
                 }
-                else // 02_Прямой_пуск.ema
+                else // === 04 Вставить макрос 02_Прямой_пуск.ema
                 {
                     macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\02_Прямой_пуск.ema";
 
@@ -179,7 +162,7 @@ namespace LenarSoft.EplanActions
                 }
 
 
-                // Макрос 03 — Насос калорифера
+                // === 05 Вставить макрос Макрос 03 — Насос калорифера
                 if (nasos == "Да")
                 {
                     macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\03_Насос_калорифера.ema";
@@ -199,7 +182,7 @@ namespace LenarSoft.EplanActions
                     insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary5, insertPoint);
                 }
 
-                // Макрос 04 — Насос увлажнителя
+                // === 06 Вставить макрос Макрос 04 — Насос увлажнителя
                 if (uvlazhnitel == "Да")
                 {
                     macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\04_Насос_увлажнителя.ema";
@@ -219,7 +202,7 @@ namespace LenarSoft.EplanActions
                     insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary6, insertPoint);
                 }
 
-                // Макрос 05 — Лампа сеть
+                // === 07 Вставить макрос Макрос 05 — Лампа сеть
                 macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\05_Лампа_Сеть.ema";
                 Dictionary<string, Dictionary<string, string>> dictionary7 = new Dictionary<string, Dictionary<string, string>>
                 {
@@ -233,7 +216,7 @@ namespace LenarSoft.EplanActions
                 insert = new MacroGenerator(project);
                 insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary7, insertPoint);
 
-                // Макрос 06 — Питание 24 В
+                // === 08 Вставить макрос Макрос 06 — Питание 24 В
                 macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\06_Питание_24В.ema";
                 Dictionary<string, Dictionary<string, string>> dictionary8 = new Dictionary<string, Dictionary<string, string>>
                 {
@@ -246,6 +229,302 @@ namespace LenarSoft.EplanActions
                 insertPoint = new PointD(0, 0);
                 insert = new MacroGenerator(project);
                 insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
+
+                // Создать страницу
+                plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
+                nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
+
+                nextPageProps = new PagePropertyList();
+
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED] = designationUserDefined;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE] = docType;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] = nextNum;
+
+                nextPage = new Page();
+                nextPage.Create(project, currentPage.PageType, nextPageProps);
+
+                editService = new Edit();
+                editService.OpenPageWithName(nextPage.Project.ProjectLinkFilePath, nextPage.IdentifyingName);
+                interpreter = new CommandLineInterpreter();
+                interpreter.Execute("XGedSelectPageAction");
+                interpreter.Execute("XEsSyncPDDsAction");
+                interpreter.Execute("XGedEscapeAction");
+                currentPage = nextPage;
+
+                // === 09 Вставить макрос Макрос 06_Питание_24В_2
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\06_Питание_24В_2.ema";
+                dictionary = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
+
+                // Создать страницу
+                plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
+                nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
+
+                nextPageProps = new PagePropertyList();
+
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED] = designationUserDefined;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE] = docType;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] = nextNum;
+
+                nextPage = new Page();
+                nextPage.Create(project, currentPage.PageType, nextPageProps);
+
+                editService = new Edit();
+                editService.OpenPageWithName(nextPage.Project.ProjectLinkFilePath, nextPage.IdentifyingName);
+                interpreter = new CommandLineInterpreter();
+                interpreter.Execute("XGedSelectPageAction");
+                interpreter.Execute("XEsSyncPDDsAction");
+                interpreter.Execute("XGedEscapeAction");
+                currentPage = nextPage;
+
+                // === 10 Вставить макрос Макрос 07_Цепи_управления
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\07_Цепи_управления.ema";
+                dictionary = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
+
+                // Создать страницу
+                plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
+                nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
+
+                nextPageProps = new PagePropertyList();
+
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED] = designationUserDefined;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE] = docType;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] = nextNum;
+
+                nextPage = new Page();
+                nextPage.Create(project, currentPage.PageType, nextPageProps);
+
+                editService = new Edit();
+                editService.OpenPageWithName(nextPage.Project.ProjectLinkFilePath, nextPage.IdentifyingName);
+                interpreter = new CommandLineInterpreter();
+                interpreter.Execute("XGedSelectPageAction");
+                interpreter.Execute("XEsSyncPDDsAction");
+                interpreter.Execute("XGedEscapeAction");
+                currentPage = nextPage;
+
+                // === 11 Вставить макрос Макрос 06_ПЛК_и_модули_1
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\06_ПЛК_и_модули_1.ema";
+                dictionary = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
+
+                // Создать страницу
+                plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
+                nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
+
+                nextPageProps = new PagePropertyList();
+
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED] = designationUserDefined;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE] = docType;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] = nextNum;
+
+                nextPage = new Page();
+                nextPage.Create(project, currentPage.PageType, nextPageProps);
+
+                editService = new Edit();
+                editService.OpenPageWithName(nextPage.Project.ProjectLinkFilePath, nextPage.IdentifyingName);
+                interpreter = new CommandLineInterpreter();
+                interpreter.Execute("XGedSelectPageAction");
+                interpreter.Execute("XEsSyncPDDsAction");
+                interpreter.Execute("XGedEscapeAction");
+                currentPage = nextPage;
+
+                // === 12 Вставить макрос Макрос 06_ПЛК_и_модули_2
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\06_ПЛК_и_модули_2.ema";
+                dictionary = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
+
+                // Создать страницу
+                plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
+                nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
+
+                nextPageProps = new PagePropertyList();
+
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED] = designationUserDefined;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE] = docType;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] = nextNum;
+
+                nextPage = new Page();
+                nextPage.Create(project, currentPage.PageType, nextPageProps);
+
+                editService = new Edit();
+                editService.OpenPageWithName(nextPage.Project.ProjectLinkFilePath, nextPage.IdentifyingName);
+                interpreter = new CommandLineInterpreter();
+                interpreter.Execute("XGedSelectPageAction");
+                interpreter.Execute("XEsSyncPDDsAction");
+                interpreter.Execute("XGedEscapeAction");
+                currentPage = nextPage;
+
+                // === 13 Вставить макрос Макрос 06_ПЛК_и_модули_3
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\06_ПЛК_и_модули_3.ema";
+                dictionary = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
+
+                // Создать страницу
+                plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
+                nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
+
+                nextPageProps = new PagePropertyList();
+
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED] = designationUserDefined;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE] = docType;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] = nextNum;
+
+                nextPage = new Page();
+                nextPage.Create(project, currentPage.PageType, nextPageProps);
+
+                editService = new Edit();
+                editService.OpenPageWithName(nextPage.Project.ProjectLinkFilePath, nextPage.IdentifyingName);
+                interpreter = new CommandLineInterpreter();
+                interpreter.Execute("XGedSelectPageAction");
+                interpreter.Execute("XEsSyncPDDsAction");
+                interpreter.Execute("XGedEscapeAction");
+                currentPage = nextPage;
+
+                // === 14 Вставить макрос Макрос 06_ПЛК_и_модули_4
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\06_ПЛК_и_модули_4.ema";
+                dictionary = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
+
+                // Создать страницу
+                plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
+                nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
+
+                nextPageProps = new PagePropertyList();
+
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED] = designationUserDefined;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE] = docType;
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] = nextNum;
+
+                nextPage = new Page();
+                nextPage.Create(project, currentPage.PageType, nextPageProps);
+
+                editService = new Edit();
+                editService.OpenPageWithName(nextPage.Project.ProjectLinkFilePath, nextPage.IdentifyingName);
+                interpreter = new CommandLineInterpreter();
+                interpreter.Execute("XGedSelectPageAction");
+                interpreter.Execute("XEsSyncPDDsAction");
+                interpreter.Execute("XGedEscapeAction");
+                currentPage = nextPage;
+
+                // === 15 Вставить макрос Макрос 06_ПЛК_и_модули_5
+                macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\06_ПЛК_и_модули_5.ema";
+                dictionary = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["CONTROL_CABINET"] = new Dictionary<string, string>
+                    {
+                        ["FUNCTION"] = "M0-85-050",
+                        ["PLACE"] = "JD01-CM1001"
+                    },
+                };
+                insertPoint = new PointD(0, 0);
+                insert = new MacroGenerator(project);
+                insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary8, insertPoint);
+
+                MessageBox.Show("Схема сгенерирована");
             }
             return true;
         }
