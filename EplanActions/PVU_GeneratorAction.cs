@@ -40,7 +40,7 @@ namespace LenarSoft.EplanActions
                 ["INPUT_PVU"] = new Dictionary<string, string>
                 {
                     ["PRODUCT_NUMBER_QS1"] = "DEK.000",
-                    ["PRODUCT_NUMBER_QS1"] = "DEK.111"
+                    ["PRODUCT_NUMBER_AS1"] = "DEK.111"
                 },
             };
 
