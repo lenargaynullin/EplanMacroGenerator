@@ -21,7 +21,7 @@ namespace LenarSoft.EplanActions
             Priority = 20;
             return true;
         }
-
+        // тест
         public bool Execute(ActionCallingContext ctx)
         {
             // === 01 Вставить Макрос 01_Ввод_силовой (Работает) 14.05.26
