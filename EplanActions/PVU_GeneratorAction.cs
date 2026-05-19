@@ -39,8 +39,8 @@ namespace LenarSoft.EplanActions
             {
                 ["INPUT_PVU"] = new Dictionary<string, string>
                 {
-                    ["PRODUCT_NUMBER_QS1"] = "DEK.000",
-                    ["PRODUCT_NUMBER_AS1"] = "DEK.111"
+                    //["PRODUCT_NUMBER_QF"] = "DEK.ПЧВ3-11К-В",
+                    //["PRODUCT_NUMBER_UZ"] = "OWEN.ПЧВ3-11К-В"
                 },
             };
 
@@ -49,18 +49,21 @@ namespace LenarSoft.EplanActions
             var insert = new MacroGenerator(project);
             insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary, insertPoint);
 
-            
-            
-            // Создать страницу
+
+
+                // Создать страницу
             string plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
-            string location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
-            string functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
-            string designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+            string functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT]; // = Функ. назначение
+            string mountingSite = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION]; // ++ Место сборки
+            string location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION]; // + Место установки
+            
+            string designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED]; // Опр. пользователем
             string docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
             int nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
             PagePropertyList nextPageProps = new PagePropertyList();
 
+            nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION] = mountingSite;                           
             nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
             nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
             nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
@@ -123,26 +126,8 @@ namespace LenarSoft.EplanActions
                 workbook.Close(false);
                 excel.Quit();
 
-                // === 03 Вставить макрос 02_ПЧВ_Двигатель
-                if (pchv == "ПЧВ")
-                {
-                    macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\02_ПЧВ_Двигатель.ema";
-
-                    Dictionary<string, Dictionary<string, string>> dictionary3 = new Dictionary<string, Dictionary<string, string>>
-                    {
-                        ["CONTROL_CABINET"] = new Dictionary<string, string>
-                        {
-                            ["FUNCTION"] = "M0-85-050",
-                            ["PLACE"] = "JD01-CM1001"
-                        },
-                    };
-
-                    insertPoint = new PointD(0, 0);
-
-                    insert = new MacroGenerator(project);
-                    insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary3, insertPoint);
-                }
-                else // === 04 Вставить макрос 02_Прямой_пуск.ema
+                // === 03 Вставить макрос 02_Прямой_пуск.ema
+                if (pchv == "Прямой пуск")
                 {
                     macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\02_Прямой_пуск.ema";
 
@@ -156,9 +141,46 @@ namespace LenarSoft.EplanActions
                     };
 
                     insertPoint = new PointD(0, 0);
-
                     insert = new MacroGenerator(project);
                     insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary4, insertPoint);
+                }
+
+                // === 04.1 Вставить макрос 02_ПЧВ_Двигатель_ПЧВ3-11К-В
+                else if (modelPCHV == "ПЧВ3-11К-В")
+                {
+                    macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\02_ПЧВ_Двигатель_ПЧВ3-11К-В.ema";
+
+                    Dictionary<string, Dictionary<string, string>> dictionary3 = new Dictionary<string, Dictionary<string, string>>
+                    {
+                        ["PCHV"] = new Dictionary<string, string>
+                        {
+                            ["PRODUCT_NUMBER_QF"] = "DEK.XXX",
+                            ["PRODUCT_NUMBER_UZ"] = "OWEN.XXX"
+                        },
+                    };
+
+                    insertPoint = new PointD(0, 0);
+                    insert = new MacroGenerator(project);
+                    insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary3, insertPoint);
+                }
+
+                // === 04.2 Вставить макрос 02_ПЧВ_Двигатель_ПЧВ3-15К-В
+                else if (modelPCHV == "ПЧВ3-15К-В")
+                {
+                    macroPath = @"C:\Users\Public\EPLAN\Data\Макросы\Company name\PVU_Generator\02_ПЧВ_Двигатель_ПЧВ3-15К-В.ema";
+
+                    Dictionary<string, Dictionary<string, string>> dictionary3 = new Dictionary<string, Dictionary<string, string>>
+                    {
+                        ["PLACEHOLDER_NAME"] = new Dictionary<string, string>
+                        {
+                            ["PRODUCT_NUMBER_QF"] = "DEK.XXX",
+                            ["PRODUCT_NUMBER_UZ"] = "OWEN.XXX"
+                        },
+                    };
+
+                    insertPoint = new PointD(0, 0);
+                    insert = new MacroGenerator(project);
+                    insert.InsertMacroWithPlaceholders(currentPage, macroPath, dictionary3, insertPoint);
                 }
 
 
@@ -232,14 +254,17 @@ namespace LenarSoft.EplanActions
 
                 // Создать страницу
                 plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
-                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
-                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
-                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT]; // = Функ. назначение
+                mountingSite = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION]; // ++ Место сборки
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION]; // + Место установки
+
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED]; // Опр. пользователем
                 docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
                 nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
                 nextPageProps = new PagePropertyList();
 
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION] = mountingSite;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
@@ -274,14 +299,17 @@ namespace LenarSoft.EplanActions
 
                 // Создать страницу
                 plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
-                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
-                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
-                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT]; // = Функ. назначение
+                mountingSite = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION]; // ++ Место сборки
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION]; // + Место установки
+
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED]; // Опр. пользователем
                 docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
                 nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
                 nextPageProps = new PagePropertyList();
 
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION] = mountingSite;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
@@ -316,14 +344,17 @@ namespace LenarSoft.EplanActions
 
                 // Создать страницу
                 plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
-                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
-                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
-                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT]; // = Функ. назначение
+                mountingSite = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION]; // ++ Место сборки
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION]; // + Место установки
+
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED]; // Опр. пользователем
                 docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
                 nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
                 nextPageProps = new PagePropertyList();
 
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION] = mountingSite;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
@@ -358,14 +389,17 @@ namespace LenarSoft.EplanActions
 
                 // Создать страницу
                 plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
-                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
-                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
-                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT]; // = Функ. назначение
+                mountingSite = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION]; // ++ Место сборки
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION]; // + Место установки
+
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED]; // Опр. пользователем
                 docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
                 nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
                 nextPageProps = new PagePropertyList();
 
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION] = mountingSite;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
@@ -400,14 +434,17 @@ namespace LenarSoft.EplanActions
 
                 // Создать страницу
                 plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
-                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
-                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
-                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT]; // = Функ. назначение
+                mountingSite = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION]; // ++ Место сборки
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION]; // + Место установки
+
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED]; // Опр. пользователем
                 docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
                 nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
                 nextPageProps = new PagePropertyList();
 
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION] = mountingSite;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
@@ -442,14 +479,17 @@ namespace LenarSoft.EplanActions
 
                 // Создать страницу
                 plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
-                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
-                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
-                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT]; // = Функ. назначение
+                mountingSite = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION]; // ++ Место сборки
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION]; // + Место установки
+
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED]; // Опр. пользователем
                 docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
                 nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
                 nextPageProps = new PagePropertyList();
 
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION] = mountingSite;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
@@ -484,14 +524,17 @@ namespace LenarSoft.EplanActions
 
                 // Создать страницу
                 plant = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT];
-                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION];
-                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT];
-                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED];
+                functionalAssigment = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT]; // = Функ. назначение
+                mountingSite = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION]; // ++ Место сборки
+                location = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION]; // + Место установки
+
+                designationUserDefined = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_USERDEFINED]; // Опр. пользователем
                 docType = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_DOCTYPE];
                 nextNum = currentPage.Properties[Eplan.EplApi.DataModel.Properties.Page.PAGE_COUNTER] + 1;
 
                 nextPageProps = new PagePropertyList();
 
+                nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLACEOFINSTALLATION] = mountingSite;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_PLANT] = plant;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_LOCATION] = location;
                 nextPageProps[Eplan.EplApi.DataModel.Properties.Page.DESIGNATION_FUNCTIONALASSIGNMENT] = functionalAssigment;
