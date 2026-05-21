@@ -18,12 +18,13 @@ namespace LenarSoft
             var ribbonBar = new Eplan.EplApi.Gui.RibbonBar();
 
             ribbonBar.AddCommand("Генератор Шкаф ПВУ", "PVU_GeneratorAction");
-            ribbonBar.AddCommand("DisplayTheTypeAction", "DisplayTheTypeAction");
+            //ribbonBar.AddCommand("DisplayTheTypeAction", "DisplayTheTypeAction");
             //ribbonBar.AddCommand("InsertMacro", "InsertMacroAction");
             //ribbonBar.AddCommand("Устройства на дин рейке", "MarkViewPortAction");
             //ribbonBar.AddCommand("Заменить шкаф в обзоре модели", "ReplaceCabinetInViewportAction");
             //ribbonBar.AddCommand("Показать только дверь в обзоре модели", "ShowOnlyDoorInViewportAction");
             //ribbonBar.AddCommand("Вставить клеммы", "InsertTerminalBlockAction");
+            
 
             bLoadOnStart = true;
             return true;
@@ -45,11 +46,12 @@ namespace LenarSoft
             var ribbonBar = new Eplan.EplApi.Gui.RibbonBar();
             ribbonBar.RemoveCommand("PVU_GeneratorAction");
             ribbonBar.RemoveCommand("DisplayTheTypeAction");
-            ribbonBar.RemoveCommand("InsertMacroAction");
+            //ribbonBar.RemoveCommand("InsertMacroAction");
             //ribbonBar.RemoveCommand("MarkViewPortAction");
             //ribbonBar.RemoveCommand("ReplaceCabinetInViewportAction");
             //ribbonBar.RemoveCommand("ShowOnlyDoorInViewportAction");
-            ribbonBar.RemoveCommand("InsertTerminalBlockAction");
+            //ibbonBar.RemoveCommand("InsertTerminalBlockAction");
+            //ribbonBar.RemoveCommand("ActiveTimeTrackerAction");
             return true;
         }
     }

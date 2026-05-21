@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EPLAN>
+  <AddIn>
+    <!-- Уникальное имя плагина, должно совпадать с неймспейсом в коде -->
+    <Name>LenarSoft.EplanActions</Name>
+    <Description>Отслеживание активного времени работы над проектами EPLAN</Description>
+    <Version>1.0.0.0</Version>
+    <!-- Точное имя вашего скомпилированного DLL-файла -->
+    <Assembly>LenarSoft.EplanActions.dll</Assembly>
+    <!-- Указываем, что плагин должен грузиться сразу при старте EPLAN -->
+    <Startup>Auto</Startup>
+  </AddIn>
+</EPLAN>

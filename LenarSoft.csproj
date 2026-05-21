@@ -144,6 +144,9 @@
     <None Include="EplanActions\CreateSimpleViewportAction.cs" />
     <Compile Include="EplanActions\DisplayTheTypeAction.cs" />
     <None Include="EplanActions\GenerateFromExcelAction.cs" />
+    <Compile Include="EplanActions\ActiveTimeTrackerAction.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="EplanActions\PVU_GeneratorAction.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
